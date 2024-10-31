@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Signature Saver</title>
+  <style>
+    #signatureCanvas {
+      border: 1px solid #000;
+      background-color: rgba(255, 255, 255, 0);
+      cursor: crosshair;
+    }
+    #controls {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Draw Your Signature</h1>
+  <canvas id="signatureCanvas" width="500" height="150"></canvas>
+  
+  <div id="controls">
+    <input type="text" id="fileName" placeholder="Write First&LastName">
+    <button onclick="saveSignature()">Save as PNG</button>
+    <button onclick="clearCanvas()">Clear Canvas</button>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('signatureCanvas');
+    const ctx = canvas.getContext('2d');
+    ctx.lineWidth = 2;
+    ctx.strokeStyle = '#000000';
+    let drawing = false;
+    let points = []; // Array to store points for smoothing
+
+    // Start drawing
+    canvas.addEventListener('mousedown', startDrawing);
+    canvas.addEventListener('mousemove', draw);
+    canvas.addEventListener('mouseup', stopDrawing);
+    canvas.addEventListener('mouseleave', stopDrawing);
+
+    function startDrawing(event) {
+      drawing = true;
+      points = []; // Clear the points array
+      addPoint(event); // Add the first point
+    }
+
+    function addPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      points.push({ x, y });
+    }
+
+    function draw(event) {
+      if (!drawing) return;
+      addPoint(event);
+
+      // Clear and redraw the canvas with smoothed lines
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.beginPath();
+
+      // Draw each segment as a smoothed line
+      for (let i = 0; i < points.length - 1; i++) {
+        const start = points[i];
+        const end = points[i + 1];
+        const midPoint = {
+          x: (start.x + end.x) / 2,
+          y: (start.y + end.y) / 2
+        };
+
+        ctx.quadraticCurveTo(start.x, start.y, midPoint.x, midPoint.y);
+      }
+      ctx.stroke();
+    }
+
+    function stopDrawing() {
+      drawing = false;
+      points = []; // Clear points array after finishing stroke
+    }
+
+    function clearCanvas() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function saveSignature() {
+      const fileName = document.getElementById('fileName').value || 'signature';
+      const link = document.createElement('a');
+      link.download = `${fileName}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+  </script>
+
+</body>
+</html>
